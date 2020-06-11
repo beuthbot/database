@@ -18,12 +18,12 @@ GET http://localhost:27000/user/<id>
 
 ```json
 {
-  "error": null,          // Optional error message.
+  "error": null,          # Optional error message.
   "id": 12345678,
   "nickname": "Alan",
   "details" : {
     "eating_habit" : "vegetarisch",
-    "city" : "Berlin",
+    "city" : "Berlin"
   }
 }
 ```
@@ -38,7 +38,7 @@ POST http://localhost:27000/user/<id>/detail
 
 ```json
 {
-  "detail": "eating_habit"
+  "detail": "eating_habit",
   "value": "vegetarisch"
 }
 ```
@@ -47,7 +47,7 @@ POST http://localhost:27000/user/<id>/detail
 
 ```json
 {
-  "error": null,          // Optional error message.
+  "error": null,          # Optional error message.
   "success": true
 }
 ```
@@ -62,7 +62,7 @@ DELETE http://localhost:27000/user/<id>/detail
 
 ```json
 {
-  "error": null,          // Optional error message.
+  "error": null,          # Optional error message.
   "success": true
 }
 ```
