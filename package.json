@@ -1,0 +1,17 @@
+{
+  "name": "beuthbot.database.package",
+  "version": "1.0.0",
+  "description": "Package for BeuthBot database",
+  "main": "database.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+	"start" : "node database.js"
+  },
+  "author": "Lukas Danckwerth",
+  "license": "ISC",
+  "dependencies": {
+    "mongodb": "^3.5.8",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1"
+  }
+}
