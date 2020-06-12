@@ -9,6 +9,9 @@
 // load node.js modules
 const util = require('util')
 
+var MongoClient = require('mongodb').MongoClient;
+var url = "mongodb://localhost:27017/";
+
 // use express app for hadling incoming requests
 const express = require('express')
 
@@ -29,8 +32,21 @@ app.get('/', function(req, res) {
 	res.end()
 })
 
-app.post('/', function(req, res) {
+app.get('/user/:id', function(req, res) {
+	res.send('request user' + req.params.id)
+	res.end()
+})
 
+app.post('/user/:id', function(req, res) {
+	res.send('post request user' + req.params.id)
+	res.send('post request body' + req.body)
+	res.end()
+})
+
+app.del('/user/:id', function(req, res) {
+	res.send('del request user' + req.params.id)
+	res.send('del request body' + req.body)
+	res.end()
 })
 
 // start running the express application listening on port 3000

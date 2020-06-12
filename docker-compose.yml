@@ -11,7 +11,7 @@ services:
       - MONGO_INITDB_ROOT_USERNAME
       - MONGO_INITDB_ROOT_PASSWORD
     volumes:
-      - ./.database:/data/db
+      - ./../.database:/data/db
 
   database:
     build: .
@@ -19,6 +19,6 @@ services:
     links:
       - mongo
     ports:
-      - 3000:27000
+      - 27000:3000
     environment:
       - MONGO_DB_ENDPOINT=mongodb://mongo:27017/users

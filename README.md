@@ -1,8 +1,12 @@
 # database
 
+![Icon](.documentation/Icon100.png "Icon")
+
 > BeuthBot database using MongoDB written in JavaScript
 
 ## Feature
+
+The database stores data related to users.
 
 ...
 
@@ -66,4 +70,21 @@ DELETE http://localhost:27000/user/<id>/detail
   "success": true
 }
 ```
+
+## Build With
+
+- [Node.js](https://nodejs.org/en/)
+- [Express](https://expressjs.com/)
+- [axios](https://github.com/axios/axios)
+
+## Versioning
+
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/beuthbot/deconcentrator-js/releases)
+
+## Authors
+
+* Lukas Danckwerth - Initial work - [GitHub](https://github.com/lukasdanckwerth)
+* Tobias Belkner - [GitHub](https://github.com/lukasdanckwerth)
+
+See also [here](https://github.com/beuthbot/mensa_microservice/graphs/contributors) for a list of contributors
 
