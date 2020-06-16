@@ -11,7 +11,8 @@ services:
       - MONGO_INITDB_ROOT_USERNAME
       - MONGO_INITDB_ROOT_PASSWORD
     volumes:
-      - ./../.database:/data/db
+      - mongodata:/data/db # needed for me to run container on Windows 10
+     # - ./../.database:/data/db # For Mac/Linux
 
   database:
     build: .
@@ -22,3 +23,7 @@ services:
       - 27000:3000
     environment:
       - MONGO_DB_ENDPOINT=mongodb://mongo:27017/users
+
+# needed for me to run container on Windows 10
+volumes:
+  mongodata:
