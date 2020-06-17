@@ -72,6 +72,27 @@ async function createUser(id, user) {
 }
 
 /**
+ * Deletes the user which has the given id
+ * @param {id of the user} id 
+ */
+async function deleteUser(id) {
+    const client = new MongoClient(uri)
+
+    try {
+        await client.connect()
+        const db = client.db("beuthbot")
+        const collection = db.collection('users')
+
+        return collection.deleteOne({id: id})
+        
+    } catch (exception) {
+        console.error(`Something bad happend right here: ${exception}`)
+    } finally {
+        client.close()
+    }
+}
+
+/**
  * Creates a Collection if the given name does not exist
  * @param {The name of the collection to create} collectionName 
  * @returns A String if the operation was successful or not
@@ -121,5 +142,6 @@ module.exports = {
     createUser: createUser,
     createCollection: createCollection,
     connect: connect,
-    getCollectionNames: getCollectionNames
+    getCollectionNames: getCollectionNames,
+    deleteUser: deleteUser
 } 
