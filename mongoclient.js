@@ -19,6 +19,24 @@ async function connect() {
     }
 }
 
+async function getAllUsers() {
+    const client = new MongoClient(uri)
+    
+    try {
+        await client.connect()
+        const db = client.db("beuthbot")
+        const collection = db.collection("users")
+
+        const users = collection.find().toArray()
+
+        return users
+    } catch (exception) {
+        console.error(`Something bad happend right here: ${exception}`)
+    } finally {
+        client.close()
+    }
+}
+
 /**
  * gets the user with the given telegram id from the database
  * @param {the telegram_id which will be given via rest request on this backend} id 
@@ -92,6 +110,24 @@ async function deleteUser(id) {
     }
 }
 
+async function deleteAllUsers() {
+    const client = new MongoClient(uri)
+
+    try {
+        await client.connect()
+        const db = client.db("beuthbot")
+        const collection = db.collection('users')
+
+        const usersToDelete = collection.deleteMany({})
+
+        return usersToDelete
+    } catch (exception) {
+        console.error(`Something bad happend right here: ${exception}`)
+    } finally {
+        client.close()
+    }
+}
+
 /**
  * Creates a Collection if the given name does not exist
  * @param {The name of the collection to create} collectionName 
@@ -139,9 +175,11 @@ async function getCollectionNames() {
 
 module.exports = {
     getUser: getUser,
+    getAllUsers: getAllUsers,
     createUser: createUser,
     createCollection: createCollection,
     connect: connect,
     getCollectionNames: getCollectionNames,
-    deleteUser: deleteUser
+    deleteUser: deleteUser,
+    deleteAllUsers: deleteAllUsers
 } 

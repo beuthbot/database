@@ -34,7 +34,6 @@ mongoclient.createCollection('users').then(res => {
 	console.log(res)
 })
 
-
 // for parsing application/json
 app.use(bodyParser.json())
 
