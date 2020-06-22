@@ -1,6 +1,7 @@
 require('dotenv').config()
-
 const { MongoClient } = require('mongodb');
+const User = require('./models/users').User;
+const { Details } = require('./models/details');
 const uri = process.env.MONGO_URI;
 
 /**
@@ -21,17 +22,18 @@ async function connect() {
 
 async function getAllUsers() {
     const client = new MongoClient(uri)
-    
+
     try {
         await client.connect()
         const db = client.db("beuthbot")
         const collection = db.collection("users")
-
         const users = collection.find().toArray()
 
         return users
     } catch (exception) {
-        console.error(`Something bad happend right here: ${exception}`)
+        return {
+            error: `Something bad happened while trying to get all Users: ${exception}`
+        }
     } finally {
         client.close()
     }
@@ -47,11 +49,13 @@ async function getUser(id) {
     try {
         await client.connect()
         const db = client.db("beuthbot")
-        const user = db.collection('users').findOne({id: id})
+        const user = db.collection('users').findOne({ id: parseInt(id) })
 
         return user
     } catch (exception) {
-        console.error(`Something bad happend right here: ${exception}`)
+        return {
+            error: `Something bad happened while trying to get the User with the id ${id}: ${exception}`
+        }
     } finally {
         client.close()
     }
@@ -64,26 +68,29 @@ async function getUser(id) {
  */
 async function createUser(id, user) {
     const client = new MongoClient(uri)
-    const newUser = {
-        id: id,
-        name: user.name
-    }
+
+    const newUser = new User(id, user.name, {})
 
     try {
         await client.connect()
         const db = client.db("beuthbot")
         const collection = db.collection('users')
 
-        const userToCreate = await collection.findOne({id: id})
-        
+        const userToCreate = await collection.findOne({ id: parseInt(id) })
+
         if (!userToCreate) {
-            return collection.insertOne(newUser)
+            collection.insertOne(newUser)
+            return newUser
         } else {
-            return `User with id ${id} does already exist!`
+            return {
+                error: `User with id ${id} does already exist!`
+            }
         }
-        
+
     } catch (exception) {
-        console.error(`Something bad happend right here: ${exception}`)
+        return {
+            error: `Something bad happened while trying to create User with the id ${id}: ${exception}`
+        }
     } finally {
         client.close()
     }
@@ -101,10 +108,17 @@ async function deleteUser(id) {
         const db = client.db("beuthbot")
         const collection = db.collection('users')
 
-        return collection.deleteOne({id: id})
-        
+        collection.deleteOne({ id: parseInt(id) })
+
+        return {
+            error: null,
+            success: true
+        }
     } catch (exception) {
-        console.error(`Something bad happend right here: ${exception}`)
+        return {
+            error: `Something bad happened while trying to delete the User with the id ${id}: ${exception}`,
+            success: false
+        }
     } finally {
         client.close()
     }
@@ -118,11 +132,17 @@ async function deleteAllUsers() {
         const db = client.db("beuthbot")
         const collection = db.collection('users')
 
-        const usersToDelete = collection.deleteMany({})
+        collection.deleteMany({})
 
-        return usersToDelete
+        return {
+            error: null,
+            success: true
+        }
     } catch (exception) {
-        console.error(`Something bad happend right here: ${exception}`)
+        return {
+            error: `Something bad happened while trying to delete all Users: ${exception}`,
+            success: false
+        }
     } finally {
         client.close()
     }
@@ -173,6 +193,52 @@ async function getCollectionNames() {
     }
 }
 
+/**
+ * 
+ * @param {the id of the user of which the detail should be added/changed} id 
+ * @param {the detail object from the req.body containing a key value pair for the details} detail 
+ */
+async function addDetail(id, detail) {
+    const client = new MongoClient(uri)
+    const newDetail = new Details(detail.detail, detail.value)
+
+    try {
+        await client.connect()
+        const db = client.db("beuthbot")
+        const collection = db.collection('users')
+
+        const userToUpdate = await collection.findOne({ id: parseInt(id) })
+
+        if (userToUpdate) {
+            userToUpdate['details'][newDetail['detail']] = newDetail['value']
+            collection.updateOne({}, {
+                $set: {
+                    details: userToUpdate['details']
+                }
+            })
+            return newDetail
+        } else {
+            return {
+                error: `Something bad happened while trying to add/change the detail of the user with the id ${id}`
+            }
+        }
+    } catch (exception) {
+        return {
+            error: `Something bad happened while trying to add/change the detail of the user with the id ${id}: ${exception}`
+        }
+    } finally {
+        client.close()
+    }
+}
+
+async function deleteDetail(id, detail) {
+    // TODO: implement the delete operation with mongodb
+}
+
+async function deleteAllDetails(id, detail) {
+    // TODO: implement the delete operation with mongodb
+}
+
 module.exports = {
     getUser: getUser,
     getAllUsers: getAllUsers,
@@ -181,5 +247,8 @@ module.exports = {
     connect: connect,
     getCollectionNames: getCollectionNames,
     deleteUser: deleteUser,
-    deleteAllUsers: deleteAllUsers
+    deleteAllUsers: deleteAllUsers,
+    addDetail: addDetail,
+    deleteDetail: deleteDetail,
+    deleteAllDetails: deleteAllDetails
 } 

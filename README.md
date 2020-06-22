@@ -15,7 +15,7 @@ The database stores data related to users.
 ### Request **User**
 
 ```http
-GET http://localhost:27000/user/<id>
+GET http://localhost:27000/users/:id
 ```
 
 #### Reponse
@@ -35,7 +35,7 @@ GET http://localhost:27000/user/<id>
 ### Add / Change **Detail**
 
 ```http
-POST http://localhost:27000/user/<id>/detail
+POST http://localhost:27000/users/:id/detail
 ```
 
 #### Request Body
@@ -59,7 +59,7 @@ POST http://localhost:27000/user/<id>/detail
 ###  Delete **Detail**
 
 ```http
-DELETE http://localhost:27000/user/<id>/detail
+DELETE http://localhost:27000/user/:id/detail
 ```
 
 #### Reponse

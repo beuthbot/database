@@ -52,8 +52,6 @@ app.get('/', function(req, res) {
 	res.end()
 })
 
-
-
 // start running the express application listening on port 3000
 app.listen(3000, function() {
 	console.log('Database listening on port 3000!')
