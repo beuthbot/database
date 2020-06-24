@@ -1,9 +1,8 @@
 "use strict";
 class User {
-    constructor(id, nickname, details) {
+    constructor(id, nickname) {
         this.id = parseInt(id)
         this.nickname = nickname
-        this.details = details
     }
 }
 

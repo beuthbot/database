@@ -210,7 +210,9 @@ async function addDetail(id, detail) {
         const userToUpdate = await collection.findOne({ id: parseInt(id) })
 
         if (userToUpdate) {
-            userToUpdate['details'][newDetail['detail']] = newDetail['value']
+            userToUpdate['details'] = {
+                [newDetail['detail']]: newDetail['value']
+            }
             collection.updateOne({}, {
                 $set: {
                     details: userToUpdate['details']
@@ -231,12 +233,83 @@ async function addDetail(id, detail) {
     }
 }
 
+// TODO: complete this function
 async function deleteDetail(id, detail) {
-    // TODO: implement the delete operation with mongodb
+    const client = new MongoClient(uri)
+
+    const detailKeys = Object.keys(detail)
+
+    try {
+        await client.connect()
+        const db = client.db("beuthbot")
+        const collection = db.collection('users')
+
+        const userToUpdate = await collection.findOne({ id: parseInt(id) })
+        
+        const detailsString = detailKeys.forEach(d => {
+            return `${d}`
+        })
+
+        if (userToUpdate) {
+            // collection.updateOne({details: {detail: detail[detailKeys]}}, {
+            //     $unset: {
+            //         details.detail[detailKeys[0]]: 1
+            //     }
+            // })
+            return {
+                error: null,
+                success: true
+            }
+        } else {
+            return {
+                error: `Something bad happened while trying to delete one or more Details from user with id ${id}`,
+                success: false
+            }
+        }
+    } catch (exception) {
+        return {
+            error: `Something bad happened while trying to delete one or more Details from the user with the id ${id}: ${exception}`,
+            success: false
+        }
+    } finally {
+        client.close()
+    }
 }
 
-async function deleteAllDetails(id, detail) {
-    // TODO: implement the delete operation with mongodb
+async function deleteAllDetails(id) {
+    const client = new MongoClient(uri)
+
+    try {
+        await client.connect()
+        const db = client.db("beuthbot")
+        const collection = db.collection('users')
+
+        const userToUpdate = await collection.findOne({ id: parseInt(id) })
+
+        if (userToUpdate) {
+            collection.updateOne({}, {
+                $unset: {
+                    details: 1
+                }
+            })
+            return {
+                error: null,
+                success: true
+            }
+        } else {
+            return {
+                error: `Something bad happened while trying to delete all Details from user with id ${id}`,
+                success: false
+            }
+        }
+    } catch (exception) {
+        return {
+            error: `Something bad happened while trying to delete all Details from the user with the id ${id}: ${exception}`,
+            success: false
+        }
+    } finally {
+        client.close()
+    }
 }
 
 module.exports = {
