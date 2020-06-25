@@ -11,18 +11,42 @@ The database stores data related to users.
 ...
 
 ## API
+### Request all **Users**
+Requests all Users in the collection
+```http
+GET http://localhost:27000/users
+```
 
+#### Response
+```json
+{...},
+{
+  "id": 12345678,
+  "nickname": "Alan",
+  "details" : {
+    "eating_habit" : "vegetarisch",
+    "city" : "Berlin"
+  }
+},
+{...}
+```
+
+#### Error
+```json
+{
+  "error": ...
+}
+```
 ### Request **User**
 
 ```http
-GET http://localhost:27000/users/:id
+GET http://localhost:27000/users/<id>
 ```
 
 #### Reponse
-
+Request a single user with the given id.
 ```json
 {
-  "error": null,          # Optional error message.
   "id": 12345678,
   "nickname": "Alan",
   "details" : {
@@ -32,10 +56,18 @@ GET http://localhost:27000/users/:id
 }
 ```
 
-### Add / Change **Detail**
+#### Error
 
+```json
+{
+  "error": ...
+}
+```
+
+### Add / Change **Detail**
+Add/Change a Detaile to/from the User with the given id.
 ```http
-POST http://localhost:27000/users/:id/detail
+POST http://localhost:27000/users/<id>/detail
 ```
 
 #### Request Body
@@ -48,30 +80,43 @@ POST http://localhost:27000/users/:id/detail
 ```
 
 #### Reponse
-
+If the operation was successful the error will be set to null and the success will be set to true. If the operation failed an error message will be set and the success will be set to false.
 ```json
 {
-  "error": null,          # Optional error message.
-  "success": true
+  "error": null,
+  "success": true | false
 }
 ```
-
-###  Delete **Detail**
-
+###  Delete all **Details**
+Deletes all Details from the User with the given id
 ```http
-DELETE http://localhost:27000/user/:id/detail
+DELETE http://localhost:27000/user/<id>/detail?q=<value>
+```
+#### Reponse
+If the operation was successful the error will be set to null and the success will be set to true. If the operation failed an error message will be set and the success will be set to false.
+```json
+{
+  "error": null,
+  "success": true | false
+}
+```
+###  Delete **Detail**
+Deletes one Detail from the User with the given id.
+```http
+DELETE http://localhost:27000/user/<id>/detail?q=<value>
 ```
 
 #### Reponse
-
+If the operation was successful the error will be set to null and the success will be set to true. If the operation failed an error message will be set and the success will be set to false.
 ```json
 {
-  "error": null,          # Optional error message.
-  "success": true
+  "error": null,
+  "success": true | false
 }
 ```
 
 ## Build With
+
 
 - [Node.js](https://nodejs.org/en/)
 - [Express](https://expressjs.com/)

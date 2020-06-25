@@ -194,7 +194,7 @@ async function getCollectionNames() {
 }
 
 /**
- * 
+ * Adds/Changes a detail to/from the user document
  * @param {the id of the user of which the detail should be added/changed} id 
  * @param {the detail object from the req.body containing a key value pair for the details} detail 
  */
@@ -210,9 +210,10 @@ async function addDetail(id, detail) {
         const userToUpdate = await collection.findOne({ id: parseInt(id) })
 
         if (userToUpdate) {
-            userToUpdate['details'] = {
-                [newDetail['detail']]: newDetail['value']
+            if (Object.keys(userToUpdate['details']).length === 0) {
+                userToUpdate['details'] = {}
             }
+            userToUpdate['details'][newDetail['detail']] = newDetail['value']
             collection.updateOne({}, {
                 $set: {
                     details: userToUpdate['details']
@@ -233,11 +234,16 @@ async function addDetail(id, detail) {
     }
 }
 
-// TODO: complete this function
+/**
+ * Finds the user and checks if that specific user exists. If it does exist, the details will be deleted via update function from mongodb.
+ * If the details subdocument is empty afterwards, the subdocument will be deleted to clean up the users document
+ * @param {the id of the user of which the detals should be deleted} id 
+ * @param {the detail given by the url query} detail 
+ */
 async function deleteDetail(id, detail) {
     const client = new MongoClient(uri)
-
     const detailKeys = Object.keys(detail)
+    const fieldKey = detailKeys.map((item) => `details.${detail[item]}`)
 
     try {
         await client.connect()
@@ -245,30 +251,34 @@ async function deleteDetail(id, detail) {
         const collection = db.collection('users')
 
         const userToUpdate = await collection.findOne({ id: parseInt(id) })
-        
-        const detailsString = detailKeys.forEach(d => {
-            return `${d}`
-        })
 
         if (userToUpdate) {
-            // collection.updateOne({details: {detail: detail[detailKeys]}}, {
-            //     $unset: {
-            //         details.detail[detailKeys[0]]: 1
-            //     }
-            // })
+
+
+            const updatedUser = collection.findOneAndUpdate(
+                { id: parseInt(id) },
+                { $unset: { [fieldKey[0]]: 1 } },
+                { returnOriginal: false }
+            )
+
+            const userDetailsKeys = Object.keys((await updatedUser).value.details)
+            console.log(userDetailsKeys);
+            
+            if (userDetailsKeys.length === 0) deleteAllDetails(id)
+
             return {
                 error: null,
                 success: true
             }
         } else {
             return {
-                error: `Something bad happened while trying to delete one or more Details from user with id ${id}`,
+                error: `User with id: ${id} does not exist!`,
                 success: false
             }
         }
     } catch (exception) {
         return {
-            error: `Something bad happened while trying to delete one or more Details from the user with the id ${id}: ${exception}`,
+            error: `Something bad happened while trying to delete one Detail from the user with the id ${id}: ${exception}`,
             success: false
         }
     } finally {
@@ -276,6 +286,10 @@ async function deleteDetail(id, detail) {
     }
 }
 
+/**
+ * Deletes the details submodule from a specific user
+ * @param {the id of the user of which the details should be deleted} id 
+ */
 async function deleteAllDetails(id) {
     const client = new MongoClient(uri)
 
@@ -287,7 +301,7 @@ async function deleteAllDetails(id) {
         const userToUpdate = await collection.findOne({ id: parseInt(id) })
 
         if (userToUpdate) {
-            collection.updateOne({}, {
+            collection.updateOne({ id: parseInt(id) }, {
                 $unset: {
                     details: 1
                 }
