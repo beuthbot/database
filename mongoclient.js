@@ -199,6 +199,7 @@ async function getCollectionNames() {
  * @param {the detail object from the req.body containing a key value pair for the details} detail 
  */
 async function addDetail(id, detail) {
+    
     const client = new MongoClient(uri)
     const newDetail = new Details(detail.detail, detail.value)
 
@@ -210,7 +211,7 @@ async function addDetail(id, detail) {
         const userToUpdate = await collection.findOne({ id: parseInt(id) })
 
         if (userToUpdate) {
-            if (Object.keys(userToUpdate['details']).length === 0) {
+            if (typeof userToUpdate['details'] === 'undefined') {
                 userToUpdate['details'] = {}
             }
             userToUpdate['details'][newDetail['detail']] = newDetail['value']
