@@ -63,6 +63,20 @@ Request a single user with the given id.
   "error": ...
 }
 ```
+### Get Details
+Get the Details of a User
+
+```http
+GET http://localhost:27000/users/<id>/detail
+```
+
+#### Response
+
+```json
+{
+  "city": "Berlin"
+}
+```
 
 ### Add / Change **Detail**
 Add/Change a Detaile to/from the User with the given id.

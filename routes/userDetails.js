@@ -3,7 +3,7 @@ const router = express.Router({mergeParams: true})
 const mongoclient = require('./../mongoclient.js');
 
 router.get('/', (req, res, next) => {
-    res.send(`This is userDetails route of ${req.params.id}`)
+    sendResponse(req, res, mongoclient.getDetailsFromUser(req.params.id))
 })
 
 router.post('/', (req, res, next) => {

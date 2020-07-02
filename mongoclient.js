@@ -193,13 +193,24 @@ async function getCollectionNames() {
     }
 }
 
+async function getDetailsFromUser(id) {
+    const user = await getUser(id)
+
+    if (user.details) {
+        return user['details']
+    } else {
+        return {
+            error: `User with id ${id} has no saved details`
+        }
+    }
+}
+
 /**
  * Adds/Changes a detail to/from the user document
  * @param {the id of the user of which the detail should be added/changed} id 
  * @param {the detail object from the req.body containing a key value pair for the details} detail 
  */
 async function addDetail(id, detail) {
-    
     const client = new MongoClient(uri)
     const newDetail = new Details(detail.detail, detail.value)
 
@@ -215,7 +226,7 @@ async function addDetail(id, detail) {
                 userToUpdate['details'] = {}
             }
             userToUpdate['details'][newDetail['detail']] = newDetail['value']
-            collection.updateOne({}, {
+            collection.updateOne({id: parseInt(id)}, {
                 $set: {
                     details: userToUpdate['details']
                 }
@@ -336,6 +347,7 @@ module.exports = {
     getCollectionNames: getCollectionNames,
     deleteUser: deleteUser,
     deleteAllUsers: deleteAllUsers,
+    getDetailsFromUser: getDetailsFromUser,
     addDetail: addDetail,
     deleteDetail: deleteDetail,
     deleteAllDetails: deleteAllDetails
