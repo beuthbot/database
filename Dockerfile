@@ -1,4 +1,4 @@
-FROM node
+FROM node:11-alpine
 
 # Create app directory
 RUN mkdir -p /app
@@ -12,4 +12,5 @@ RUN npm install
 COPY . /app
 
 EXPOSE 3000
+
 CMD [ "npm", "run", "start" ]

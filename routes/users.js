@@ -2,9 +2,13 @@ const express = require('express');
 const router = express.Router();
 const mongoclient = require('./../mongoclient.js');
 const userDetails = require('./userDetails')
+const findUser = require('./find')
 
 // for the details of a specific user
 router.use('/:id/detail', userDetails)
+
+// for finding a user
+router.use('/find', findUser)
 
 /**
  * GET localhost:27000/users/

@@ -11,7 +11,7 @@ async function connect() {
     const client = new MongoClient(uri)
     try {
         await client.connect()
-        const db = client.db("beuthbot")
+        const db = await client.db("beuthbot")
         console.log(`Connected to database ${db.databaseName}`)
     } catch (exception) {
         console.error(`Something bad happend right here: ${exception}`)
@@ -20,14 +20,33 @@ async function connect() {
     }
 }
 
+async function getUsersCount() {
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
+
+    try {
+        await client.connect()
+        const db = await client.db("beuthbot")
+        const collection = db.collection("users")
+        const userCount = await collection.countDocuments()
+
+        return userCount
+    } catch (exception) {
+        return {
+            error: `Something bad happened while trying to receive the amout of users: ${exception}`
+        }
+    } finally {
+        client.close()
+    }
+}
+
 async function getAllUsers() {
-    const client = new MongoClient(uri)
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
 
     try {
         await client.connect()
         const db = client.db("beuthbot")
         const collection = db.collection("users")
-        const users = collection.find().toArray()
+        const users = await collection.find().toArray()
 
         return users
     } catch (exception) {
@@ -40,11 +59,11 @@ async function getAllUsers() {
 }
 
 /**
- * gets the user with the given telegram id from the database
- * @param {the telegram_id which will be given via rest request on this backend} id 
+ * gets the user with the given id from the database
+ * @param {the which will be given via rest request on this backend} id
  */
 async function getUser(id) {
-    const client = new MongoClient(uri)
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
 
     try {
         await client.connect()
@@ -62,28 +81,64 @@ async function getUser(id) {
 }
 
 /**
+ * gets the user with the given id from the database
+ * @param idName
+ * @param {the which will be given via rest request on this backend} id
+ */
+async function findUser(idName, id) {
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
+
+    try {
+        await client.connect()
+        const db = client.db("beuthbot")
+        const collection = db.collection('users')
+        const findObj = {}
+        findObj[idName] = id
+
+        // return await collection.findOne(findObj)
+
+        const userCandidate = await collection.findOne({ telegramId: parseInt(id) })
+
+        return userCandidate
+    } catch (exception) {
+        return {
+            error: `Something bad happened while trying to get the User with the id ${id}: ${exception}`
+        }
+    } finally {
+        client.close()
+    }
+}
+
+/**
  * creates a user with the given id
  * @param {the telegram_id which will be given via rest request on this backend, provided by the telegram api} id 
  * @param {the user object} user 
  */
-async function createUser(id, user) {
-    const client = new MongoClient(uri)
+// async function createUser(id, user) {
+//     createUser(new User(id, user.name, {}))
+//     const client = new MongoClient(uri, { useUnifiedTopology: true })
+// }
 
-    const newUser = new User(id, user.name, {})
+/**
+ * creates a user
+ * @param {the user object} user
+ */
+async function createUser(newUser) {
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
 
     try {
         await client.connect()
         const db = client.db("beuthbot")
         const collection = db.collection('users')
 
-        const userToCreate = await collection.findOne({ id: parseInt(id) })
+        const userToCreate = await collection.findOne({ id: parseInt(newUser.id) })
 
         if (!userToCreate) {
-            collection.insertOne(newUser)
+            await collection.insertOne(newUser)
             return newUser
         } else {
             return {
-                error: `User with id ${id} does already exist!`
+                error: `User with id ${newUser.id} does already exist!`
             }
         }
 
@@ -101,7 +156,7 @@ async function createUser(id, user) {
  * @param {id of the user} id 
  */
 async function deleteUser(id) {
-    const client = new MongoClient(uri)
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
 
     try {
         await client.connect()
@@ -125,7 +180,7 @@ async function deleteUser(id) {
 }
 
 async function deleteAllUsers() {
-    const client = new MongoClient(uri)
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
 
     try {
         await client.connect()
@@ -154,7 +209,7 @@ async function deleteAllUsers() {
  * @returns A String if the operation was successful or not
  */
 async function createCollection(collectionName) {
-    const client = new MongoClient(uri)
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
     try {
         await client.connect()
         const db = client.db("beuthbot")
@@ -174,7 +229,7 @@ async function createCollection(collectionName) {
  * Gets the name of every collection and returns it as an array
  */
 async function getCollectionNames() {
-    const client = new MongoClient(uri)
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
     const collectionNames = []
     try {
         await client.connect()
@@ -211,7 +266,7 @@ async function getDetailsFromUser(id) {
  * @param {the detail object from the req.body containing a key value pair for the details} detail 
  */
 async function addDetail(id, detail) {
-    const client = new MongoClient(uri)
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
     const newDetail = new Details(detail.detail, detail.value)
 
     try {
@@ -253,7 +308,7 @@ async function addDetail(id, detail) {
  * @param {the detail given by the url query} detail 
  */
 async function deleteDetail(id, detail) {
-    const client = new MongoClient(uri)
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
     const detailKeys = Object.keys(detail)
     const fieldKey = detailKeys.map((item) => `details.${detail[item]}`)
 
@@ -303,7 +358,7 @@ async function deleteDetail(id, detail) {
  * @param {the id of the user of which the details should be deleted} id 
  */
 async function deleteAllDetails(id) {
-    const client = new MongoClient(uri)
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
 
     try {
         await client.connect()
@@ -340,7 +395,9 @@ async function deleteAllDetails(id) {
 
 module.exports = {
     getUser: getUser,
+    findUser: findUser,
     getAllUsers: getAllUsers,
+    getUsersCount: getUsersCount,
     createUser: createUser,
     createCollection: createCollection,
     connect: connect,

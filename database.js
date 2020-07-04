@@ -22,17 +22,22 @@ const bodyParser = require('body-parser')
 // create express application
 const app = express()
 
-//routes
+// routes
 const usersRouter = require('./routes/users')
 
 // initialize db
 const mongoclient = require('./mongoclient')
-mongoclient.connect()
 
-// creates a users collection
-mongoclient.createCollection('users').then(res => {
-	console.log(res)
-})
+function connectAndCreateCollection() {
+	mongoclient.connect()
+	// creates a users collection
+	mongoclient.createCollection('users').then(res => {
+		console.log(res)
+	})
+}
+
+// mongodb takes longer to start so delay creation of collection
+setTimeout(connectAndCreateCollection, 2000)
 
 // for parsing application/json
 app.use(bodyParser.json())

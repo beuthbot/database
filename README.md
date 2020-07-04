@@ -11,7 +11,10 @@ The database stores data related to users.
 ...
 
 ## API
+
+
 ### Request all **Users**
+
 Requests all Users in the collection
 ```http
 GET http://localhost:27000/users
@@ -37,6 +40,8 @@ GET http://localhost:27000/users
   "error": ...
 }
 ```
+
+
 ### Request **User**
 
 ```http
@@ -63,7 +68,10 @@ Request a single user with the given id.
   "error": ...
 }
 ```
+
+
 ### Get Details
+
 Get the Details of a User
 
 ```http

@@ -2,20 +2,22 @@ version: '3.0'
 services:
   mongo:
     image: mongo:4.0.4
+    container_name: mongo
     restart: unless-stopped
     ports:
       - 27017:27017
 #      - 27018:27018
 #      - 27019:27019
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME
-      - MONGO_INITDB_ROOT_PASSWORD
+#    environment:
+#      - MONGO_INITDB_ROOT_USERNAME
+#      - MONGO_INITDB_ROOT_PASSWORD
     volumes:
-      - mongodata:/data/db # needed for me to run container on Windows 10
-     # - ./../.database:/data/db # For Mac/Linux
+      # - mongodata:/data/db # needed for me to run container on Windows 10
+      - ./../.database:/data/db # For Mac/Linux
 
   database:
     build: .
+    container_name: database
     restart: unless-stopped
     links:
       - mongo
@@ -23,6 +25,8 @@ services:
       - 27000:3000
     environment:
       - MONGO_DB_ENDPOINT=mongodb://mongo:27017/users
+    depends_on:
+      - mongo
 
 # needed for me to run container on Windows 10
 volumes:
