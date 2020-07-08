@@ -11,9 +11,9 @@ const util = require('util')
  */
 router.post('/', (req, res) => {
 
-    console.log("req.body: " + req.body)
-
     let message = req.body
+
+    console.debug("message:\n" + util.inspect(message, false, null, true))
     if (message) {
         console.log("message.telegramId: " + message.telegramId)
         if (message.telegramId) {
@@ -21,12 +21,12 @@ router.post('/', (req, res) => {
             mongoclient
                 .findUser("telegramId", message.telegramId)
                 .then(function (existingUserCandidate) {
-                    console.debug("existingUserCandidate:\n" + util.inspect(existingUserCandidate, false, null, true) + "\n\n")
                     if (existingUserCandidate && existingUserCandidate.telegramId) {
+                        console.debug("existingUserCandidate:\n" + util.inspect(existingUserCandidate, false, null, true))
                         res.send(existingUserCandidate)
                         res.end()
                     } else {
-
+                        console.debug("no existing user with telegramId " + message.telegramId)
                         mongoclient
                             .getUsersCount()
                             .then(function (usersCount) {
@@ -44,7 +44,7 @@ router.post('/', (req, res) => {
                                     newUser.lastName = message.lastName
 
                                     let createdUser = mongoclient.createUser(newUser)
-                                    createdUser._id = null
+                                    // createdUser._id = null
 
                                     console.debug("createdUser:\n" + util.inspect(createdUser, false, null, true) + "\n\n")
 
@@ -69,21 +69,21 @@ router.post('/', (req, res) => {
     }
 })
 
-function sendResponse(req, res, promise) {
-    promise
-        .then(response => {
-            if (response) {
-                res.send(response)
-            } else {
-                res.send(`Something bad happened`)
-            }
-        })
-        .finally(() => res.end())
-        .catch(err => {
-            console.error(err)
-            res.status(500)
-            res.end()
-        })
-}
+// function sendResponse(req, res, promise) {
+//     promise
+//         .then(response => {
+//             if (response) {
+//                 res.send(response)
+//             } else {
+//                 res.send(`Something bad happened`)
+//             }
+//         })
+//         .finally(() => res.end())
+//         .catch(err => {
+//             console.error(err)
+//             res.status(500)
+//             res.end()
+//         })
+// }
 
 module.exports = router

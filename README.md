@@ -10,10 +10,34 @@ The database stores data related to users.
 
 ...
 
+## Model
+
+### User
+
+| Property   | Type         | About                                 | Note        |
+| ---------- | ------------ | ------------------------------------- | ------------------ |
+| _id        | String      | The id given by MongoDB. |  |
+| id         | Integer      | The database id of the BeuthBot user. |  |
+| telegramId | Integer      | The telegram id of the user.          | Optional |
+| nickname   | String       | A possible nickname of the user. | Optional |
+| firstName | String       | A possible first name of the user. | Optional |
+| lastName | String       | A possible last name of the user. | Optional |
+| details    | [Sring: Any] | A dictionary of details.              | Optional |
+
 ## API
 
+The API currently has four endpoints which are listed below.
 
-### Request all **Users**
+| Enpoint               | About                                                        |
+| --------------------- | ------------------------------------------------------------ |
+| `/users`              | Request or delete all users in the database.                 |
+| `/users/<id>`         | Request, create or delete a single user in the database.     |
+| `/users/<id>/details` | Request, create or delete a detail of a user in the database. |
+| `/find`               | Let the database find a user base on a given message.        |
+
+- Request all Users
+
+### Request all Users
 
 Requests all Users in the collection
 ```http
@@ -27,7 +51,7 @@ GET http://localhost:27000/users
   "id": 12345678,
   "nickname": "Alan",
   "details" : {
-    "eating_habit" : "vegetarisch",
+    "meal-preference" : "vegetarisch",
     "city" : "Berlin"
   }
 },
@@ -153,5 +177,4 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 * Lukas Danckwerth - Initial work - [GitHub](https://github.com/lukasdanckwerth)
 * Tobias Belkner - [GitHub](https://github.com/lukasdanckwerth)
 
-See also [here](https://github.com/beuthbot/mensa_microservice/graphs/contributors) for a list of contributors
-
+See also [here](https://github.com/beuthbot/mensa_microservice/graphs/contributors) for a list of contributors.

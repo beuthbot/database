@@ -3,6 +3,7 @@ const { MongoClient } = require('mongodb');
 const User = require('./models/users').User;
 const { Details } = require('./models/details');
 const uri = process.env.MONGO_URI;
+const util = require('util')
 
 /**
  * Connect to the database with the name beuthbot
@@ -68,7 +69,7 @@ async function getUser(id) {
     try {
         await client.connect()
         const db = client.db("beuthbot")
-        const user = db.collection('users').findOne({ id: parseInt(id) })
+        const user = await db.collection('users').findOne({ id: parseInt(id) })
 
         return user
     } catch (exception) {
@@ -95,6 +96,8 @@ async function findUser(idName, id) {
         const findObj = {}
         findObj[idName] = id
 
+        console.debug("findObj:\n" + util.inspect(findObj, false, null, true) + "\n\n")
+
         // return await collection.findOne(findObj)
 
         const userCandidate = await collection.findOne({ telegramId: parseInt(id) })
@@ -102,7 +105,7 @@ async function findUser(idName, id) {
         return userCandidate
     } catch (exception) {
         return {
-            error: `Something bad happened while trying to get the User with the id ${id}: ${exception}`
+            error: `Something bad happened while trying to find the User with the telgram-id ${id}: ${exception}`
         }
     } finally {
         client.close()
@@ -250,6 +253,8 @@ async function getCollectionNames() {
 
 async function getDetailsFromUser(id) {
     const user = await getUser(id)
+
+    return user
 
     if (user.details) {
         return user['details']
