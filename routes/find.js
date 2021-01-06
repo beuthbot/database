@@ -15,45 +15,22 @@ router.post('/', (req, res) => {
 
     console.debug("message:\n" + util.inspect(message, false, null, true))
     if (message) {
-        console.log("message.telegramId: " + message.telegramId)
-        if (message.telegramId) {
+        console.log("message.messenger " + message.messenger + " - message.id: " + message.id)
+        if (message.messenger && message.id) {
 
             mongoclient
-                .findUser("telegramId", message.telegramId)
+                .findUser(message.messenger, message.id)
                 .then(function (existingUserCandidate) {
-                    if (existingUserCandidate && existingUserCandidate.telegramId) {
-                        console.debug("existingUserCandidate:\n" + util.inspect(existingUserCandidate, false, null, true))
+                    if (existingUserCandidate) {
+                        console.debug("user found:\n" + util.inspect(existingUserCandidate, false, null, true))
                         res.send(existingUserCandidate)
                         res.end()
                     } else {
-                        console.debug("no existing user with telegramId " + message.telegramId)
-                        mongoclient
-                            .getUsersCount()
-                            .then(function (usersCount) {
-
-                                console.log("usersCount: " + usersCount)
-                                console.log("usersCount: " + typeof usersCount)
-
-                                if (Number.isInteger(usersCount)) {
-                                    let nextId = usersCount + 1
-                                    console.log("nextId: " + nextId)
-
-                                    let newUser = new User(nextId, message.nickname, {})
-                                    newUser.telegramId = message.telegramId
-                                    newUser.firstName = message.firstName
-                                    newUser.lastName = message.lastName
-
-                                    let createdUser = mongoclient.createUser(newUser)
-                                    // createdUser._id = null
-
-                                    console.debug("createdUser:\n" + util.inspect(createdUser, false, null, true) + "\n\n")
-
-                                    res.send(createdUser)
-                                    res.end()
-                                } else {
-                                    res.status(404)
-                                    res.end()
-                                }
+                        console.debug("no existing user with messenger " + message.messenger + " and messenger-id: " + message.id)
+                        mongoclient.createUser(message)
+                            .then(function (user){
+                                res.send(user.ops[0])
+                                res.end()
                             })
                     }
                 })
@@ -61,8 +38,6 @@ router.post('/', (req, res) => {
             res.status(404)
             res.end()
         }
-
-        // a good place to add more ids...
     } else {
         res.status(404)
         res.end()

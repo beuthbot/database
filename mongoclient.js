@@ -1,6 +1,7 @@
 require('dotenv').config()
 const { MongoClient } = require('mongodb');
 const User = require('./models/users').User;
+const MessengerID = require('./models/messengerID').MessengerID;
 const { Details } = require('./models/details');
 const uri = process.env.MONGO_URI;
 const util = require('util')
@@ -82,75 +83,58 @@ async function getUser(id) {
 }
 
 /**
- * gets the user with the given id from the database
- * @param idName
- * @param {the which will be given via rest request on this backend} id
+ * finds the user with the given messenger and id from the database
+ * @param messenger
+ * @param id
  */
-async function findUser(idName, id) {
+async function findUser(messenger, id) {
     const client = new MongoClient(uri, { useUnifiedTopology: true })
 
     try {
+        // connect to database
         await client.connect()
         const db = client.db("beuthbot")
         const collection = db.collection('users')
-        const findObj = {}
-        findObj[idName] = id
-
-        console.debug("findObj:\n" + util.inspect(findObj, false, null, true) + "\n\n")
-
-        // return await collection.findOne(findObj)
-
-        const userCandidate = await collection.findOne({ telegramId: parseInt(id) })
-
+        // create messengerID object for search
+        const findObj = new MessengerID(messenger, id)
+        // try to find user with given data
+        const userCandidate = await collection.findOne({ messengerIDs: findObj })
+        //console.debug('SEARCH RESULT: ' + userCandidate)
         return userCandidate
     } catch (exception) {
         return {
-            error: `Something bad happened while trying to find the User with the telgram-id ${id}: ${exception}`
+            error: `Something bad happened while trying to find the User with the messenger: ${messenger} and messenger-id ${id}: ${exception}`
         }
     } finally {
         client.close()
     }
 }
 
-/**
- * creates a user with the given id
- * @param {the telegram_id which will be given via rest request on this backend, provided by the telegram api} id 
- * @param {the user object} user 
- */
-// async function createUser(id, user) {
-//     createUser(new User(id, user.name, {}))
-//     const client = new MongoClient(uri, { useUnifiedTopology: true })
-// }
+async function createUser(message){
+    console.debug(`CREATE NEW USER WITH: ${message}`)
+    const client = new MongoClient(uri, { useUnifiedTopology: true });
 
-/**
- * creates a user
- * @param {the user object} user
- */
-async function createUser(newUser) {
-    const client = new MongoClient(uri, { useUnifiedTopology: true })
-
-    try {
+    try{
+        // connect to database
         await client.connect()
         const db = client.db("beuthbot")
         const collection = db.collection('users')
-
-        const userToCreate = await collection.findOne({ id: parseInt(newUser.id) })
-
-        if (!userToCreate) {
-            await collection.insertOne(newUser)
-            return newUser
-        } else {
-            return {
-                error: `User with id ${newUser.id} does already exist!`
-            }
-        }
+        // get data for the new user
+        const userCount = await this.getUsersCount()
+        // define new user, add messenger
+        let newUser = new User(userCount + 1, message.nickname, message.firstName, message.lastName)
+        newUser.addMessengerID(new MessengerID(message.messenger,message.id))
+        // create new user in db
+        let createdUser = await collection.insertOne(newUser)
+        //console.debug("createdUser:\n" + util.inspect(createdUser, false, null, true) + "\n\n")
+        return createdUser
 
     } catch (exception) {
         return {
-            error: `Something bad happened while trying to create User with the id ${id}: ${exception}`
+            error: `Something bad happened while trying to create User from the message ${message}: ${exception}`
         }
     } finally {
-        client.close()
+        client.close();
     }
 }
 
@@ -166,12 +150,9 @@ async function deleteUser(id) {
         const db = client.db("beuthbot")
         const collection = db.collection('users')
 
-        collection.deleteOne({ id: parseInt(id) })
+        let deleted = await collection.deleteOne({ id: parseInt(id) })
 
-        return {
-            error: null,
-            success: true
-        }
+        return deleted
     } catch (exception) {
         return {
             error: `Something bad happened while trying to delete the User with the id ${id}: ${exception}`,
@@ -182,6 +163,7 @@ async function deleteUser(id) {
     }
 }
 
+//TODO change this or delete it - not working / faking its working
 async function deleteAllUsers() {
     const client = new MongoClient(uri, { useUnifiedTopology: true })
 

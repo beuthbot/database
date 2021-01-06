@@ -14,6 +14,7 @@ router.use('/find', findUser)
  * GET localhost:27000/users/
  */
 router.get('/', (req, res) => {
+    console.log("TEST GET USERS")
     sendResponse(req, res, mongoclient.getAllUsers())
 })
 
