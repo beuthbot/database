@@ -83,9 +83,10 @@ async function getUser(id) {
 }
 
 /**
- * finds the user with the given messenger and id from the database
+ * finds the user with the given messenger and (messenger-)id from the database
  * @param messenger
  * @param id
+ * @returns found User from database or null if no user was found
  */
 async function findUser(messenger, id) {
     const client = new MongoClient(uri, { useUnifiedTopology: true })
@@ -110,8 +111,13 @@ async function findUser(messenger, id) {
     }
 }
 
+/**
+ * Creates a new user with the data from the incoming message
+ * @param message - incoming message
+ * @returns user object that was created and stored in the database
+ */
 async function createUser(message){
-    console.debug(`CREATE NEW USER WITH: ${message}`)
+    //console.debug(`CREATE NEW USER WITH: ${message}`)
     const client = new MongoClient(uri, { useUnifiedTopology: true });
 
     try{
@@ -235,8 +241,6 @@ async function getCollectionNames() {
 
 async function getDetailsFromUser(id) {
     const user = await getUser(id)
-
-    return user
 
     if (user.details) {
         return user['details']

@@ -6,7 +6,8 @@
 
 ## Feature
 
-The database stores data related to users.
+The database stores data related to users. 
+Currently the database can store a list of different messenger identifications and given details about the user, that will enhance the result of the messages.
 
 ...
 
@@ -14,15 +15,30 @@ The database stores data related to users.
 
 ### User
 
-| Property   | Type         | About                                 | Note        |
-| ---------- | ------------ | ------------------------------------- | ------------------ |
-| _id        | String      | The id given by MongoDB. |  |
-| id         | Integer      | The database id of the BeuthBot user. |  |
-| telegramId | Integer      | The telegram id of the user.          | Optional |
-| nickname   | String       | A possible nickname of the user. | Optional |
-| firstName | String       | A possible first name of the user. | Optional |
-| lastName | String       | A possible last name of the user. | Optional |
-| details    | [Sring: Any] | A dictionary of details.              | Optional |
+| Property    | Type         | About                                 | Note        |
+| ----------  | ------------ | ------------------------------------- | ------------------ |
+| _id         | String       | The id given by MongoDB.              |  |
+| id          | Integer      | The database id of the BeuthBot user. |  |
+| nickname    | String       | A possible nickname of the user.      | Optional |
+| firstName   | String       | A possible first name of the user.    | Optional |
+| lastName    | String       | A possible last name of the user.     | Optional |
+| details     | [Sring: Any] | A dictionary of details.              | Optional |
+| messengerIDs| [Sring: Any] | A dictionary of messengers.           | Optional |
+
+####details
+
+| Property    | Type        | About                                 | Note        |
+| ----------  | ----------- | ------------------------------------- | ------------------ |
+| detail      | String      | The name of the detail                |  |
+| value       | String      | The value of the detail               |  |
+
+####messengerIDs
+
+| Property    | Type        | About                                 | Note        |
+| ----------  | ----------- | ------------------------------------- | ------------------ |
+| id          | Integer     | The id of the user in the messenger   |  |
+| messenger   | String      | The name of the messenger             |  |
+
 
 ## API
 
@@ -30,10 +46,11 @@ The API currently has four endpoints which are listed below.
 
 | Enpoint               | About                                                        |
 | --------------------- | ------------------------------------------------------------ |
+| `/find`               | Core functionality for the beuthbot - Let the database find a user base on a given message.        |
 | `/users`              | Request or delete all users in the database.                 |
 | `/users/<id>`         | Request, create or delete a single user in the database.     |
 | `/users/<id>/details` | Request, create or delete a detail of a user in the database. |
-| `/find`               | Let the database find a user base on a given message.        |
+
 
 - Request all Users
 
@@ -73,7 +90,7 @@ GET http://localhost:27000/users/<id>
 ```
 
 #### Reponse
-Request a single user with the given id.
+Request a single user with the given beuthbot-id.
 ```json
 {
   "id": 12345678,
@@ -176,5 +193,6 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 * Lukas Danckwerth - Initial work - [GitHub](https://github.com/lukasdanckwerth)
 * Tobias Belkner - [GitHub](https://github.com/lukasdanckwerth)
+* Lukas Danke - 
 
 See also [here](https://github.com/beuthbot/mensa_microservice/graphs/contributors) for a list of contributors.
