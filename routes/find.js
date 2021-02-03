@@ -7,7 +7,7 @@ const util = require('util')
 /**
  * Find a User by a specific id.
  *
- * GET localhost:27000/users/find/
+ * POST localhost:27000/users/find/
  */
 router.post('/', (req, res) => {
 

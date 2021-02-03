@@ -22,6 +22,10 @@ async function connect() {
     }
 }
 
+/**************************************************
+ *****************  handling user  ****************
+ **************************************************/
+
 async function getUsersCount() {
     const client = new MongoClient(uri, { useUnifiedTopology: true })
 
@@ -112,12 +116,13 @@ async function findUser(messenger, id) {
 }
 
 /**
+ * TODO add checks to filter creations without userData
  * Creates a new user with the data from the incoming message
  * @param message - incoming message
  * @returns user object that was created and stored in the database
  */
 async function createUser(message){
-    //console.debug(`CREATE NEW USER WITH: ${message}`)
+    console.debug(`CREATE NEW USER WITH: ${message}`)
     const client = new MongoClient(uri, { useUnifiedTopology: true });
 
     try{
@@ -250,6 +255,10 @@ async function getDetailsFromUser(id) {
         }
     }
 }
+
+/**************************************************
+ **************** handling details ****************
+ **************************************************/
 
 /**
  * Adds/Changes a detail to/from the user document
@@ -384,6 +393,313 @@ async function deleteAllDetails(id) {
     }
 }
 
+/**************************************************
+ ************* handling user accounts *************
+ **************************************************/
+
+/**
+ * function to register a new messenger to a given user
+ * @param user - the user object
+ * @param accountData - should contain the messenger and the used id
+ * @returns success: updated user
+ *          failure: error object with description and registration status
+ */
+async function registerAccount(user,accountData){
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
+
+    try{
+        await client.connect()
+        const db = client.db("beuthbot")
+        const collection = db.collection('users')
+        // check required values
+        if(user.id && user.messengerIDs){
+            // check registered messengers
+            if (!isRegistered(user.messengerIDs,accountData.messenger)){
+                // create new messenger object
+                let messengerID = new MessengerID(accountData.messenger, accountData.id)
+                let updatedMessengerIDs = user.messengerIDs.push(messengerID)
+                // add messenger to user
+                const updatedUser = await collection.updateOne({id: parseInt(user.id)}, {
+                    $set: {
+                        messengerIDs: updatedMessengerIDs
+                    }
+                })
+                // return registered user
+                return updatedUser
+            } else {
+                return {
+                    error: `The user with the id ${user.id} has already an registered account from the messenger ${accountData.messenger}`,
+                    success: false,
+                    registered: true
+                }
+            }
+        } else {
+            return {
+                error: `Couldn't use the user to register a new account`,
+                success: false,
+                registered: false
+            }
+        }
+    } catch (exception){
+        return {
+            error: `Something bad happened while trying to register a new account to the user with the id ${user.id}: ${exception}`,
+            success: false,
+            registered: false
+        }
+    } finally {
+        client.close()
+    }
+}
+
+/**
+ * function to merge user with the same messenger accounts into one user
+ * @param user - user that will used as merge-target
+ * @param accountData - account data to identify the other user
+ * @returns single user that includes the complete data of merged users
+ */
+async function mergeUsers(user, accountData){
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
+
+    try{
+        await client.connect()
+        const db = client.db("beuthbot")
+        const collection = db.collection('users')
+
+        if(user.id && accountData.messenger && accountData.messengerIDs){
+            // search all accounts related to the given data
+            let foundUsers = await searchAccounts(accountData)
+
+            if(foundUsers.success){
+                // set data from given user as starting point
+                let mergedNickname = user.nickname
+                let mergedFirstName = user.firstName
+                let mergedLastName = user.lastName
+                let mergedMessengerIDs = user.messengerIDs
+                let mergedDetails = user.details
+                // fill usable data from found users to the given data
+                foundUsers.forEach(function(foundUser){
+                    // set identifiers only if not set before
+                    if(!mergedNickname && foundUser.nickname){
+                        mergedNickname = foundUser.nickname
+                    }
+                    if(!mergedFirstName && foundUser.firstName){
+                        mergedFirstName = foundUser.firstName
+                    }
+                    if(!mergedLastName && foundUser.lastName){
+                        mergedLastName = foundUser.lastName
+                    }
+                    // search and append only new details
+                    mergedDetails = mergeDetails(mergedDetails,foundUser.details)
+                    // search and append new messenger connections???
+                    mergedMessengerIDs = mergeMessengerIDs(mergedMessengerIDs, foundUser.messengerIDs)
+                })
+                // update merged user in the database
+                let mergedUser = await collection.updateOne({id: parseInt(user.id)}, {
+                    $set: {
+                        nickname: mergedNickname,
+                        firstName: mergedFirstName,
+                        lastName: mergedLastName,
+                        messengerIDs: mergedMessengerIDs,
+                        details: mergedDetails
+                    }
+                })
+                // return updated user
+                return mergedUser
+            } else {
+                return {
+                    error: `Couldn't find any users to merge with`,
+                    success: false,
+                    merged: foundUsers.found
+                }
+            }
+        } else {
+            return {
+                error: `Couldn't use the user or accountData to merge accounts`,
+                success: false,
+                merged: false
+            }
+        }
+    } catch (exception){
+        return {
+            error: `Something bad happened while trying to merge accounts for the user with the id ${user.id}: ${exception}`,
+            success: false,
+            merged: false
+        }
+    } finally {
+        client.close()
+    }
+}
+
+
+/**
+ * Collects all users that contain the given accountData
+ * @param accountData - data used to filter the user database
+ * @returns array of user
+ */
+async function searchAccounts(accountData){
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
+
+    try{
+        await client.connect()
+        const db = client.db("beuthbot")
+        const collection = db.collection('users')
+
+        if(accountData){
+
+        } else {
+            return {
+                error: `Couldn't use the accountData to search for accounts`,
+                success: false,
+                found: false
+            }
+        }
+    } catch (exception){
+        return {
+            error: `Something bad happened while trying to search accounts for the user merge: ${exception}`,
+            success: false,
+            found: false
+        }
+    } finally {
+        client.close()
+    }
+}
+
+/**
+ * function to delete a given messenger account from a given user
+ * @param user - user to delete the given messenger account from
+ * @param messenger - the messenger, that needs to be removed
+ * @returns updated user
+ */
+async function deleteAccount(user,messenger){
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
+
+    try{
+        await client.connect()
+        const db = client.db("beuthbot")
+        const collection = db.collection('users')
+        // check required values
+        if(user && user.id && user.messengerIDs){
+            // check registered messengers
+            if (isRegistered(user.messengerIDs,messenger)){
+                console.log(user.messengerIDs)
+                // remove account
+                let updatedMessengerIDs = removeMessenger(user.messengerIDs,messenger)
+                // update user
+                console.log(user.updatedMessengerIDs)
+                const updatedUser = await collection.updateOne({id: parseInt(user.id)}, {
+                    $set: {
+                        messengerIDs: updatedMessengerIDs
+                    }
+                })
+                // return updated user
+                return updatedUser
+            } else {
+                return {
+                    error: `The user with the id ${user.id} hasn't registered an account from the messenger ${messenger}`,
+                    success: false,
+                    unregistered: true
+                }
+            }
+        } else {
+            return {
+                error: `Couldn't use the user to register a new account`,
+                success: false
+            }
+        }
+    } catch (exception){
+        return {
+            error: `Something bad happened while trying to delete a existing account from the user with the id ${user.id}: ${exception}`,
+            success: false
+        }
+    } finally {
+        client.close()
+    }
+}
+
+/**************************************************
+ **************** helper functions ****************
+ **************************************************/
+
+/**
+ *
+ * @param currentDetails
+ * @param newDetails
+ */
+function mergeDetails(currentDetails,newDetails){
+    let mergedDetails = currentDetails
+    newDetails.forEach(function(detail){
+        // search detail in array
+        let isDetailFound = false
+        mergedDetails.forEach(function(mergedDetail){
+            if (mergedDetail.detail.normalize() === detail.detail.normalize()){
+                isDetailFound = true
+            }
+        })
+        // append to merged array, if detail is new
+        if(!isDetailFound){
+            mergedDetails.push(detail)
+        }
+    })
+
+    return mergedDetails
+}
+
+/**
+ *
+ * @param currentMessengerIDs
+ * @param newMessengerIDs
+ */
+function mergeMessengerIDs(currentMessengerIDs,newMessengerIDs){
+    let mergedMessengerIDs = currentMessengerIDs
+    newMessengerIDs.forEach(function(messengerID){
+        let isMessengerIDFound = false
+        mergedMessengerIDs.forEach(function(mergedMessengerID){
+            if (mergedMessengerID.messenger.normalize() === messengerID.messenger.normalize()){
+                isMessengerIDFound = true
+            }
+        })
+        if(!isMessengerIDFound){
+            mergedMessengerIDs.push(messengerID)
+        }
+    })
+}
+
+/**
+ * helper function to remover a messenger account from a given account array
+ * @param messengerIDs - array of messenger accounts
+ * @param messenger - messenger, that needs to be deleted
+ * @returns messenger array without the removed messenger account
+ */
+function removeMessenger(messengerIDs, messenger){
+    let updatedMessengerIDs = messengerIDs
+
+    return updatedMessengerIDs.filter(function(messengerID){
+        // filter out the messenger
+        if (messengerID.messenger.normalize() === messenger.normalize()){
+            return null
+        }
+        return messengerID
+    })
+}
+
+
+/**
+ * checks if a messenger is already registered
+ * @param messengerIDs - array of registered messengers
+ * @param messenger - the messenger to check
+ * @returns {boolean}
+ */
+function isRegistered(messengerIDs,messenger){
+    let registered = false
+    // filter, if messenger is registered
+    messengerIDs.forEach(function (messengerID){
+        if(messengerID.messenger.normalize() === messenger.normalize()){
+            registered = true
+        }
+    })
+    return registered
+}
+
 module.exports = {
     getUser: getUser,
     findUser: findUser,
@@ -398,5 +714,8 @@ module.exports = {
     getDetailsFromUser: getDetailsFromUser,
     addDetail: addDetail,
     deleteDetail: deleteDetail,
-    deleteAllDetails: deleteAllDetails
+    deleteAllDetails: deleteAllDetails,
+    registerAccount: registerAccount,
+    deleteAccount: deleteAccount,
+    mergeUsers: mergeUsers
 } 

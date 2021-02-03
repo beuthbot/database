@@ -3,12 +3,21 @@ const router = express.Router();
 const mongoclient = require('./../mongoclient.js');
 const userDetails = require('./userDetails')
 const findUser = require('./find')
+const registerUser = require('./register')
+const mergeUser = require('./merge')
+
 
 // for the details of a specific user
 router.use('/:id/detail', userDetails)
 
 // for finding a user
 router.use('/find', findUser)
+
+// to register accounts
+router.use('/register', registerUser)
+
+// merging accounts
+router.use('/merge', mergeUser)
 
 /**
  * GET localhost:27000/users/
