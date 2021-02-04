@@ -15,18 +15,18 @@ router.post('/', (req, res) => {
 
     console.debug("message:\n" + util.inspect(message, false, null, true))
     if (message) {
-        console.log("message.messenger " + message.messenger + " - message.id: " + message.id)
-        if (message.messenger && message.id) {
+        console.log("message.messenger " + message.serviceName + " - message.id: " + message.serviceUserId)
+        if (message.serviceName && message.serviceUserId) {
 
             mongoclient
-                .findUser(message.messenger, message.id)
+                .findUser(message.serviceName, message.serviceUserId)
                 .then(function (existingUserCandidate) {
                     if (existingUserCandidate) {
                         console.debug("user found:\n" + util.inspect(existingUserCandidate, false, null, true))
                         res.send(existingUserCandidate)
                         res.end()
                     } else {
-                        console.debug("no existing user with messenger " + message.messenger + " and messenger-id: " + message.id)
+                        console.debug("no existing user with messenger " + message.serviceName + " and messenger-id: " + message.serviceUserId)
                         mongoclient.createUser(message)
                             .then(function (user){
                                 res.send(user.ops[0])

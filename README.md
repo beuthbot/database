@@ -22,8 +22,8 @@ Currently the database can store a list of different messenger identifications a
 | nickname    | String       | A possible nickname of the user.      | Optional |
 | firstName   | String       | A possible first name of the user.    | Optional |
 | lastName    | String       | A possible last name of the user.     | Optional |
-| details     | [Sring: Any] | A dictionary of details.              | Optional |
-| messengerIDs| [Sring: Any] | A dictionary of messengers.           | Optional |
+| details     | [Object: Any] | A dictionary of details.              | Optional |
+| messengerIDs| [Object: Any] | A dictionary of messengers.           | Optional |
 
 ####details
 
@@ -36,7 +36,7 @@ Currently the database can store a list of different messenger identifications a
 
 | Property    | Type        | About                                 | Note        |
 | ----------  | ----------- | ------------------------------------- | ------------------ |
-| id          | Integer     | The id of the user in the messenger   |  |
+| id          | String      | The id of the user in the messenger   |  |
 | messenger   | String      | The name of the messenger             |  |
 
 
