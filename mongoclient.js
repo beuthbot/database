@@ -134,7 +134,7 @@ async function createUser(message){
         const userCount = await this.getUsersCount()
         // define new user, add messenger
         let newUser = new User(userCount + 1, message.nickname, message.firstName, message.lastName)
-        newUser.addMessengerID(new MessengerID(message.messenger,message.id))
+        newUser.addMessengerID(new MessengerID(message.serviceName,message.serviceUserId))
         // create new user in db
         let createdUser = await collection.insertOne(newUser)
         //console.debug("createdUser:\n" + util.inspect(createdUser, false, null, true) + "\n\n")
