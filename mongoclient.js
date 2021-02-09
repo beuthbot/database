@@ -277,16 +277,19 @@ async function addDetail(id, detail) {
         const userToUpdate = await collection.findOne({ id: parseInt(id) })
 
         if (userToUpdate) {
-            if (typeof userToUpdate['details'] === 'undefined') {
-                userToUpdate['details'] = {}
-            }
-            userToUpdate['details'][newDetail['detail']] = newDetail['value']
-            collection.updateOne({id: parseInt(id)}, {
+            // remove old detail before adding the new one, if detail already exists
+            let details = removeDetail(userToUpdate.details,detail.detail)
+            // add detail
+            details.push(newDetail)
+            console.log(details)
+
+            const updatedUser = await collection.updateOne({id: parseInt(id)}, {
                 $set: {
-                    details: userToUpdate['details']
+                    details: details
                 }
             })
-            return newDetail
+
+            return updatedUser
         } else {
             return {
                 error: `Something bad happened while trying to add/change the detail of the user with the id ${id}`
@@ -305,52 +308,60 @@ async function addDetail(id, detail) {
  * Finds the user and checks if that specific user exists. If it does exist, the details will be deleted via update function from mongodb.
  * If the details subdocument is empty afterwards, the subdocument will be deleted to clean up the users document
  * @param {the id of the user of which the detals should be deleted} id 
- * @param {the detail given by the url query} detail 
+ * @param {the detail given by the url query} query
  */
-async function deleteDetail(id, detail) {
+async function deleteDetail(id, query) {
     const client = new MongoClient(uri, { useUnifiedTopology: true })
-    const detailKeys = Object.keys(detail)
-    const fieldKey = detailKeys.map((item) => `details.${detail[item]}`)
+    // get the detail from the query
+    const detail = query[Object.keys(query)]
 
-    try {
-        await client.connect()
-        const db = client.db("beuthbot")
-        const collection = db.collection('users')
+    if(detail){
+        try {
+            await client.connect()
+            const db = client.db("beuthbot")
+            const collection = db.collection('users')
 
-        const userToUpdate = await collection.findOne({ id: parseInt(id) })
+            const userToUpdate = await collection.findOne({ id: parseInt(id) })
 
-        if (userToUpdate) {
+            if (userToUpdate) {
+                // try to remove detail and give error, when no detail was deleted
+                let detailCount = userToUpdate.details.length
+                let details = removeDetail(userToUpdate.details,detail)
+                if (details.length === detailCount){
+                    return {
+                        error: `No detail ${detail} found to delete`,
+                        success: false
+                    }
+                }
 
+                const updatedUser = await collection.findOneAndUpdate(
+                    { id: parseInt(id) },
+                    { $set: { details: details } },
+                    { returnOriginal: false }
+                )
 
-            const updatedUser = collection.findOneAndUpdate(
-                { id: parseInt(id) },
-                { $unset: { [fieldKey[0]]: 1 } },
-                { returnOriginal: false }
-            )
-
-            const userDetailsKeys = Object.keys((await updatedUser).value.details)
-            console.log(userDetailsKeys);
-            
-            if (userDetailsKeys.length === 0) deleteAllDetails(id)
-
-            return {
-                error: null,
-                success: true
+                return updatedUser
+            } else {
+                return {
+                    error: `User with id: ${id} does not exist!`,
+                    success: false
+                }
             }
-        } else {
+        } catch (exception) {
             return {
-                error: `User with id: ${id} does not exist!`,
+                error: `Something bad happened while trying to delete one Detail from the user with the id ${id}: ${exception}`,
                 success: false
             }
+        } finally {
+            client.close()
         }
-    } catch (exception) {
+    } else {
         return {
-            error: `Something bad happened while trying to delete one Detail from the user with the id ${id}: ${exception}`,
+            error: `No detail given to delete`,
             success: false
         }
-    } finally {
-        client.close()
     }
+
 }
 
 /**
@@ -368,15 +379,13 @@ async function deleteAllDetails(id) {
         const userToUpdate = await collection.findOne({ id: parseInt(id) })
 
         if (userToUpdate) {
-            collection.updateOne({ id: parseInt(id) }, {
-                $unset: {
-                    details: 1
+            let updatedUser = await collection.updateOne({ id: parseInt(id) }, {
+                $set: {
+                    details: []
                 }
             })
-            return {
-                error: null,
-                success: true
-            }
+
+            return updatedUser
         } else {
             return {
                 error: `Something bad happened while trying to delete all Details from user with id ${id}`,
@@ -421,7 +430,7 @@ async function registerAccount(user,accountData){
                 // add messenger to user
                 const updatedUser = await collection.updateOne({id: parseInt(user.id)}, {
                     $set: {
-                        messengerIDs: updatedMessengerIDs
+                        messengerIDs: user.messengerIDs
                     }
                 })
                 // return registered user
@@ -468,8 +477,8 @@ async function mergeUsers(user, accountData){
         if(user.id && accountData.messenger && accountData.messengerIDs){
             // search all accounts related to the given data
             let foundUsers = await searchAccounts(accountData)
-
-            if(foundUsers.success){
+            // check if user array was returned successfully
+            if(Array.isArray(foundUsers)){
                 // set data from given user as starting point
                 let mergedNickname = user.nickname
                 let mergedFirstName = user.firstName
@@ -508,22 +517,19 @@ async function mergeUsers(user, accountData){
             } else {
                 return {
                     error: `Couldn't find any users to merge with`,
-                    success: false,
-                    merged: foundUsers.found
+                    success: false
                 }
             }
         } else {
             return {
                 error: `Couldn't use the user or accountData to merge accounts`,
-                success: false,
-                merged: false
+                success: false
             }
         }
     } catch (exception){
         return {
             error: `Something bad happened while trying to merge accounts for the user with the id ${user.id}: ${exception}`,
-            success: false,
-            merged: false
+            success: false
         }
     } finally {
         client.close()
@@ -545,19 +551,22 @@ async function searchAccounts(accountData){
         const collection = db.collection('users')
 
         if(accountData){
+            // using the id as solo identifier //TODO maybe change to messenger and id is safer
+            let userList = await collection.find({
+                "messengerIDs.id": accountData.id
+            }).toArray()
 
+            return userList
         } else {
             return {
                 error: `Couldn't use the accountData to search for accounts`,
-                success: false,
-                found: false
+                success: false
             }
         }
     } catch (exception){
         return {
             error: `Something bad happened while trying to search accounts for the user merge: ${exception}`,
-            success: false,
-            found: false
+            success: false
         }
     } finally {
         client.close()
@@ -609,6 +618,109 @@ async function deleteAccount(user,messenger){
     } catch (exception){
         return {
             error: `Something bad happened while trying to delete a existing account from the user with the id ${user.id}: ${exception}`,
+            success: false
+        }
+    } finally {
+        client.close()
+    }
+}
+
+/**
+ * saves a new register-code for a given user with a given timestamp to the register collection
+ * @param id
+ * @param code
+ * @returns
+ */
+async function addRegisterCode(id,code,time){
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
+
+    try{
+        await client.connect()
+        const db = client.db("beuthbot")
+        const collection = db.collection('register')
+
+        if(id){
+            if(code){
+                // check if code is already used
+                let registerObject = await collection.findOne({code: parseInt(code)})
+                // delete existing register object with the same code, if it expired (>15min)
+                if(registerObject){
+                    let timeDifference = time - registerObject.time
+                    // check if code is still active, if not just delete the old entry
+                    if (timeDifference > 900000 || registerObject.userid.normalize() === id.normalize()) {
+                        // use deleteMany to make sure, that no duplicate codes exist in the collection
+                        await collection.deleteMany({code: parseInt(code)})
+                    } // if id ist different and the code is still active, we have to reject the registration-process
+                    else {
+                        return {
+                            error: `code given is already used as registration code and still active`,
+                            success: false,
+                            retry: true
+                        }
+                    }
+                }
+                let newRegisterCodeObject = await collection.insertOne({
+                    userid: id,
+                    code: parseInt(code),
+                    time: time
+                })
+
+                return newRegisterCodeObject
+            } else {
+                return {
+                    error: `no code given to add as registration code`,
+                    success: false
+                }
+            }
+        } else {
+            return {
+                error: `no user-id given to add a registration code`,
+                success: false
+            }
+        }
+    } catch (exception){
+        return {
+            error: `Something bad happened while trying to add as registration code for the user with the id ${id}: ${exception}`,
+            success: false
+        }
+    } finally {
+        client.close()
+    }
+}
+
+/**
+ *
+ * @param code
+ * @returns
+ */
+async function getRegisterUser(code){
+    const client = new MongoClient(uri, { useUnifiedTopology: true })
+
+    try{
+        await client.connect()
+        const db = client.db("beuthbot")
+        const collection = db.collection('register')
+
+        if(code){
+            let registerObject = await collection.findOne({code: parseInt(code)})
+
+            if(!registerObject){
+                return {
+                    error: `no code found`,
+                    success: false
+                }
+            }
+
+            return registerObject
+        } else {
+            return {
+                error: `no code given to get a user for registration`,
+                success: false
+            }
+        }
+    } catch (exception){
+        return {
+            error: `Something bad happened while trying to add as registration code for the user with the id ${id}: ${exception}`,
             success: false
         }
     } finally {
@@ -682,6 +794,20 @@ function removeMessenger(messengerIDs, messenger){
     })
 }
 
+function removeDetail(details,detail){
+    let updatedDetails = details
+
+    console.log(updatedDetails)
+
+    return updatedDetails.filter(function(currentDetail){
+        // filter out the messenger
+        if (currentDetail.detail.normalize() === detail.normalize()){
+            return null
+        }
+        return currentDetail
+    })
+}
+
 
 /**
  * checks if a messenger is already registered
@@ -717,5 +843,7 @@ module.exports = {
     deleteAllDetails: deleteAllDetails,
     registerAccount: registerAccount,
     deleteAccount: deleteAccount,
-    mergeUsers: mergeUsers
+    mergeUsers: mergeUsers,
+    addRegisterCode: addRegisterCode,
+    getRegisterUser: getRegisterUser
 } 

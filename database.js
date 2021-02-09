@@ -30,10 +30,13 @@ const mongoclient = require('./mongoclient')
 
 function connectAndCreateCollection() {
 	mongoclient.connect()
-	// creates a users collection
+	// creates a users and register collection
 	mongoclient.createCollection('users').then(res => {
 		console.log(res)
 	})
+    mongoclient.createCollection('register').then(res => {
+        console.log(res)
+    })
 }
 
 // mongodb takes longer to start so delay creation of collection

@@ -4,6 +4,11 @@ const mongoclient = require('./../mongoclient.js');
 const User = require('./../models/users').User;
 const util = require('util')
 
+/**
+ * merges two given user into one final user
+ *
+ * POST localhost:27000/users/register/merge/
+ */
 router.post('/',(req,res) => {
     let mergeBody = req.body
     console.debug("MERGE USER: " + mergeBody)
